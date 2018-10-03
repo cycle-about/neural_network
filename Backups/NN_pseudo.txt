@@ -1,0 +1,70 @@
+Neural network step 5 - backpropagation
+/ 1. Make training set with target outputs
+2. Run NN with the training dataset as inputs
+	/ a. run training set creation from nn.py
+	b. get input and output neuron counts to match training set
+	c. send training inputs to layer0, and to rest of net
+3. Get deltas (partial derivatives of error wrt input to neuron) for output neurons
+4. Get deltas of hidden neurons
+5. Update output neuron weights
+6. Update hidden neuron weights
+7. Calculate total error
+
+
+
+Neural network step 4 - change network structure for different-sized layers
+/ 1. take in a list with the depth of each layer
+/ 2. length of that list is the number of layers
+/ 3. make neuron network with height the max neurons in any layer 
+/ 4. update 'run' to skip neurons greater than the layer's actual height
+/ 5. neuron takes in only as many weights as are in prior layer
+
+
+
+Neural Network step 3 - Update neurons in network
+
+1. Input to layer0 - list of inputs only [.01, .02, .03, .04, 0.5, .06, .07, .08, .09, .1]
+
+2. Inputs to each subsequent neuron is:
+	a. List of outputs of prior layer
+		
+	b. List of weights of connections from prior layer
+		
+1. Input to layer0 is these, initialized to:
+	a. 
+
+
+
+
+DONE - Neural Network step 2 - make Net object of neurons
+
+
+
+DONE - Neural Network step 1
+1. create object for preceptron
+2. create contstructor that takes N inputs for preceptron
+3. initialize weights to something
+4. function run that creates the neuron's outputs
+5. function update to modify weights and biases
+
+Questions
+1. how make class/constructor
+2. how distinguish which layer neurons are in
+3. depending on 2, how store weights, biases, and outputs of each neuron
+
+NEURON CLASS
+variables:
+	1. layer location
+	2. weights of connections to next layer neurons
+	3. bias
+	4. outputs to each neuron in next layer
+	5. inputs from each neuron in prior layer (first layer gets separate list)
+
+functions:
+	1. constructor
+	2. run - calculate its outputs
+	3. sigmoid - make output between 0 and 1
+	4. update - to change weights and biases
+
+
+

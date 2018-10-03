@@ -1,0 +1,5 @@
+MIDDLE NEURON = N
+
+ERROR: sum of all (N+1.delta * N to N+1.weight)
+
+DELTA: derivative of all (N-1 to N.input * N.error)

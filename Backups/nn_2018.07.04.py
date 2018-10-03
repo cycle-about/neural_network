@@ -1,0 +1,212 @@
+'''
+Neural network
+Neuron objects are arranged in a list of lists
+Neurons to take input, calculate output, and pass output to the next layer's neurons
+Training data is from nn_train_data.py
+'''
+
+# nn_train_data generates and sends info on the training data
+import math, nn_train_data
+
+# depth of each layer. First is input layer, last is output layer
+# input and output layer sizes are determined by training dataset from nn_train_data.py
+input_num = nn_train_data.get_inputs_num() 
+output_num = nn_train_data.get_outputs_num() 
+layer_depths = [input_num,4,4,4,4,4,output_num]
+# depth of the network is the greatest layer depth
+net_depth = max(layer_depths)
+# number of layers in network is the length of the depths list
+net_layer = len(layer_depths)
+# each weight initialized to same value
+initial_weight = 0.5
+# each neuron's bias initialized to same value
+initial_bias = 0.1
+# learning rate
+N = 0.9
+error_list = []
+
+class Neuron():
+	# attributes - weights array (from prior layer connections), bias, output
+	# methods - activation function, update neuron's weight and bias 
+	def __init__(self, w = [initial_weight] * net_depth, b = initial_bias):
+		self.weights = w
+		self.bias = b
+		self.delta = None
+
+	# layer0 activation function - pass through layer only
+	# outputs are the inputs from the training dataset
+	def activate_layer0(self, layer0_input):
+		self.output = layer0_input
+		print 'Output', self.output,'\n'
+
+
+	# layer1-layerN activation function - neurons in all other layers get list of prior layer's outputs
+	def activate(self, inputs):
+		# 1. get sum of products of each input*weight
+		products = 0
+		for i in range(0, len(inputs)):
+			# print 'input is', inputs[i], 'weight is', self.weights[i]
+			products += inputs[i] * self.weights[i]
+		# 2. add neuron's bias
+		products += self.bias
+		# 3. sigmoid on sum becomes output
+		self.output = 1/(1+math.exp(-products))
+		print 'Output', self.output,'\n'
+
+	# get error of an output neuron
+	def output_error(self, expected):
+		x = self.output
+		err = expected - self.output
+		return err
+
+	# get delta of a neuron
+	def get_delta(self, err):
+		x = err
+		der_output  = 2 * math.exp(-x) / ((1 + math.exp(-x)) ** 2)
+		self.delta = der_output * err
+		print 'Delta', self.delta,'\n'
+
+	# get error of a middle neuron
+	def middle_error(self, weights, deltas):
+		err = 0
+		print 'Input weights', weights
+		print 'Input deltas', deltas
+		for i in range(len(deltas)):
+			err += weights[i] * deltas[i]
+		return err
+
+	# update neuron with new weights and bias
+	def update(self, w, b):
+		self.weights = w
+		self.bias = b
+
+# Net is composed of Neuron objects arranged in a list of lists
+# dimensions of network are net_depth * net_layer
+# neurons to be ignored in each layer are skipped by run function
+class Net():
+	# attributes - global layers, global depth, network of neurons (a 2D array for indexing)
+	# methods - run
+	def __init__(self):
+		self.network = [[Neuron() for j in range(net_depth)] for i in range(net_layer)]
+
+	# update each neuron to have bias of its depth
+	# and input weight array with each element the depth of the sending neuron
+	def set_wb(self):
+		n_weights = range(0, net_depth)
+		for i in range(0, net_layer):
+			for j in range(0, net_depth):
+				n_bias = j
+				self.network[i][j].update(n_weights, n_bias)
+
+	# inputs to layer0 passed in, from training dataset
+	# run function skips neurons that are greater than that layer's depth 
+	def feedforward(self, layer0_inputs):
+		print '\nFORWARD PASS'
+		for i in range(0, net_layer):
+			# goes only to depth of that layer
+			for j in range(0, layer_depths[i]):
+				# layer0 neurons call their unique activation function
+				if i==0:
+					print 'Neuron index', i, j,':',
+					print 'Pass through, no input weights'
+					self.network[i][j].activate_layer0(layer0_inputs[j])
+				else:
+					print 'Neuron index', i, j,':',
+					print 'Start weights', self.network[i][j].weights
+					inputs = []
+					for k in range(0, layer_depths[i-1]):
+						inputs.append(self.network[i-1][k].output)
+					self.network[i][j].activate(inputs)
+
+	def backprop(self, expected):
+		print '\n\nBACKWARD PASS'
+		# backprop runs back to front in the network
+		# does not run on layer0
+		for i in range(net_layer-1, 0, -1):
+			for j in range(0, layer_depths[i]):
+				# output neurons call their own activation function
+				if i == net_layer-1:
+					print 'Output neuron index', i, j,':',
+					error = self.network[i][j].output_error(expected)
+					self.network[i][j].get_delta(error)
+				else:
+					print 'Middle neuron index', i, j,':',
+					err = 0.0
+					prior_weights = []
+					prior_deltas = []
+					for k in range(0, layer_depths[i+1]):
+						prior_weights.append(self.network[i][k].weights[j])
+						prior_deltas.append(self.network[i+1][k].delta)
+					error = self.network[i][j].middle_error(prior_weights, prior_deltas)
+					self.network[i][j].get_delta(error)
+
+	def get_updates(self):
+		# do not update layer0
+		for i in range(1, net_layer):
+			for j in range(0, layer_depths[i]):	
+				new_weights = []
+				for k in range(0, layer_depths[i-1]):
+					new_weights.append(N * self.network[i][j].delta * self.network[i-1][k].output)
+				new_bias = N * self.network[i][j].delta
+				self.network[i][j].update(new_weights, new_bias)
+				print 'Index', i, j, ':', self.network[i][j].weights
+
+	def get_sq_error(self, expected):
+		sq_err = 0.0
+		for i in range(0, net_layer):
+			for j in range(0, layer_depths[i]):
+				sq_err += 0.5*(expected - self.network[i][j].output)**2
+		error_list.append(sq_err)					
+
+	def get_mean_error(self):
+		mean_error = 0.0
+		for i in error_list:
+			mean_error += i
+		mean_error /= len(error_list)
+		print '\n\nPERFORMANCE\nMean error:', mean_error,'\n\n'
+		return mean_error
+
+# create and display training dataset from nn_train_data.py
+train_data = nn_train_data.create_train_set()
+print 'Training Data: Input four binary digits'
+print 'Output 0 if the number of 1s is even, and 1 if it is odd','\n\n'
+for elem in train_data:
+	print elem
+print ''
+
+# initialize a network
+net0 = Net()
+
+# one time only before running, set weights and biases to unique values of neuron's location
+net0.set_wb()
+
+'''
+# update each neuron to have bias of its depth
+# and input weight array with each element the depth of the sending neuron
+n_weights = range(0, net_depth)
+for i in range(0, net_layer):
+	for j in range(0, net_depth):
+		n_bias = j
+		net0.network[i][j].update(n_weights, n_bias)
+'''
+
+# run network for all inputs sets in the training data
+all_net_errors = []
+for i in range(0, len(train_data)):
+	print '________________________________\n\nRun', i
+	layer0_inputs = train_data[i][0]		
+	expected = train_data[i][1]
+	#expected = int(''.join(map(str,train_data[i][1])))
+	print 'Input:', layer0_inputs
+	print 'Correct output:', expected,'\n'
+	net0.feedforward(layer0_inputs)
+	net0.backprop(expected)
+	print '\nUPDATED WEIGHTS'
+	net0.get_updates()
+	net0.get_sq_error(expected)
+	run_error = net0.get_mean_error()  
+	all_net_errors.append(run_error)	
+
+print 'TRAINING THE NETWORK'
+for i in range(0, len(all_net_errors)):
+	print 'Run', i, 'error:', all_net_errors[i]

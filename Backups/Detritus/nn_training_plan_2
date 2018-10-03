@@ -1,0 +1,19 @@
+ORIGINAL INPUT: nn_train_data
+1. A list
+2. Each element in list is a two-element list
+3. first element is a list of lists
+
+
+GOAL: there are no specifics in nn.py to the type of data input from nn_train_data.py, eg dimensions or composition. All processing is done in the train file
+
+Requirements for training set:
+1. list of lists with two elements: input(s), then correct output(s)
+
+
+STEPS
+1. Identify where there is dataset-specific processing still in nn.py
+2. Move processing to training set file
+3. Check how J's nn.py takes input, and what kind
+4. Make a training set with a different evaluation - 3 inputs (8 different sets possible), then count output sum, so 4 possible outputs
+5. Run the new training set with existing network
+
